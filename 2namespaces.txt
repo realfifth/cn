@@ -1,0 +1,25 @@
+# Create 2 namespaces
+sudo ip netns add ns1
+sudo ip netns add ns2
+
+# Create a veth pair
+sudo ip link add veth1 type veth peer name veth2
+
+# Move one end of the veth pair to each namespace
+sudo ip link set veth2 netns ns1
+
+# Assign IP addresses to veth interfaces inside namespaces
+sudo ip netns exec ns1 ip addr add 10.0.0.1/24 dev veth2
+sudo ip addr add 10.0.0.2/24 dev veth1
+
+# Bring up veth interfaces in root namespace and namespace ns1
+sudo ip link set veth1 up
+sudo ip netns exec ns1 ip link set veth2 up
+
+# Bring up loopback interfaces in both namespaces
+sudo ip netns exec ns1 ip link set lo up
+sudo ip netns exec ns2 ip link set lo up
+
+# Test connectivity
+sudo ip netns exec ns1 ping 10.0.0.2
+sudo ping 10.0.0.1
